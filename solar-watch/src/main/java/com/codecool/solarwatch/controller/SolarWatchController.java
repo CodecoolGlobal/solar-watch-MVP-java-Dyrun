@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 
 @RestController
 public class SolarWatchController {
@@ -22,14 +21,7 @@ public class SolarWatchController {
     @GetMapping("/sunrise-sunset")
     public ResponseEntity<?> getSunriseSunset(@RequestParam(defaultValue = "Budapest") String city,
                                               @RequestParam String date) {
-
-        LocalDate parsedDate;
-        try {
-            parsedDate = LocalDate.parse(date);
-        } catch (DateTimeParseException e) {
-            return ResponseEntity.badRequest().body("invalid date format(YYYY-MM-DD)");
-        }
-        SolarWatchReportResults result = solarWatchService.getSunriseAndSunsetForByGivenParameters(city, parsedDate);
+        SolarWatchReportResults result = solarWatchService.getSunriseAndSunsetForByGivenParameters(city, LocalDate.parse(date));
         return ResponseEntity.ok(result);
     }
 }
