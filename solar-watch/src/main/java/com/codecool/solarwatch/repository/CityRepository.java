@@ -1,6 +1,6 @@
 package com.codecool.solarwatch.repository;
 
-import com.codecool.solarwatch.model.City;
+import com.codecool.solarwatch.model.entity.City;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
