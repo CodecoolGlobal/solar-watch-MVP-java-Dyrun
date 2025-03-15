@@ -1,6 +1,10 @@
 package com.codecool.solarwatch.service;
 
-import com.codecool.solarwatch.model.*;
+import com.codecool.solarwatch.model.dto.GeocodingReport;
+import com.codecool.solarwatch.model.dto.SolarWatchReport;
+import com.codecool.solarwatch.model.dto.SolarWatchReportResults;
+import com.codecool.solarwatch.model.entity.City;
+import com.codecool.solarwatch.model.entity.SunriseSunset;
 import com.codecool.solarwatch.repository.CityRepository;
 import com.codecool.solarwatch.repository.SunriseSunsetRepository;
 import org.slf4j.Logger;
@@ -9,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -78,6 +84,38 @@ public class SolarWatchService {
             SunriseSunset savedRecord = sunriseSunsetRepository.save(newRecord);
             logger.info("Saved new sunrise/sunset record: {}", savedRecord);
             return savedRecord;
+        }
+    }
+
+    public SunriseSunset saveSunriseSunset(SunriseSunset sunriseSunset) {
+        return sunriseSunsetRepository.save(sunriseSunset);
+    }
+
+    public List<SunriseSunset> getAllSunriseSunset() {
+        return sunriseSunsetRepository.findAll();
+    }
+
+    public Optional<SunriseSunset> getSunriseSunsetById(Long id) {
+        return sunriseSunsetRepository.findById(id);
+    }
+
+    public SunriseSunset updateSunriseSunset(Long id, String newSunrise, String newSunset) {
+        Optional<SunriseSunset> SunriseSunset = sunriseSunsetRepository.findById(id);
+        if (SunriseSunset.isPresent()) {
+            SunriseSunset sunriseSunset = SunriseSunset.get();
+            sunriseSunset.setSunrise(newSunrise);
+            sunriseSunset.setSunset(newSunset);
+            return sunriseSunsetRepository.save(sunriseSunset);
+        } else {
+            throw new RuntimeException("Sunrise/Sunset record not found.");
+        }
+    }
+
+    public void deleteSunriseSunset(Long id) {
+        if (sunriseSunsetRepository.existsById(id)) {
+            sunriseSunsetRepository.deleteById(id);
+        } else {
+            throw new RuntimeException("Record not found.");
         }
     }
 }
