@@ -16,7 +16,7 @@ import java.util.Set;
 public class DatabaseInitializer {
 
     @Bean
-    public CommandLineRunner initRoles(RoleRepository roleRepo) {
+    public CommandLineRunner initRolesAndUsers(RoleRepository roleRepo, MemberRepository memberRepo, PasswordEncoder encoder) {
         return args -> {
             if (roleRepo.findByRoleType(RoleType.ROLE_USER).isEmpty()) {
                 Role roleUser = new Role();
@@ -25,21 +25,13 @@ public class DatabaseInitializer {
                 roleAdmin.setRoleType(RoleType.ROLE_ADMIN);
                 roleRepo.save(roleUser);
                 roleRepo.save(roleAdmin);
-            }
-        };
-    }
-
-    @Bean
-    public CommandLineRunner initUsers(MemberRepository memberRepo, RoleRepository roleRepo, PasswordEncoder encoder) {
-        return args -> {
-            if (memberRepo.findByName("admin").isEmpty()) {
-                Member admin = new Member();
-                Role roleAdmin = roleRepo.findByRoleType(RoleType.ROLE_ADMIN).orElseThrow();
-                Role roleUser = roleRepo.findByRoleType(RoleType.ROLE_USER).orElseThrow();
-                admin.setName("admin");
-                admin.setPassword(encoder.encode("admin"));
-                admin.setRoles(Set.of(roleAdmin, roleUser));
-                memberRepo.save(admin);
+                if (memberRepo.findByName("admin").isEmpty()) {
+                    Member admin = new Member();
+                    admin.setName("admin");
+                    admin.setPassword(encoder.encode("admin"));
+                    admin.setRoles(Set.of(roleAdmin, roleUser));
+                    memberRepo.save(admin);
+                }
             }
         };
     }
