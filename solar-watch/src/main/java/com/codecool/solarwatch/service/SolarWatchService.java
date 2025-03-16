@@ -3,6 +3,7 @@ package com.codecool.solarwatch.service;
 import com.codecool.solarwatch.model.dto.GeocodingReport;
 import com.codecool.solarwatch.model.dto.SolarWatchReport;
 import com.codecool.solarwatch.model.dto.SolarWatchReportResults;
+import com.codecool.solarwatch.model.dto.SunriseSunsetResponse;
 import com.codecool.solarwatch.model.entity.City;
 import com.codecool.solarwatch.model.entity.SunriseSunset;
 import com.codecool.solarwatch.repository.CityRepository;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -117,5 +117,10 @@ public class SolarWatchService {
         } else {
             throw new RuntimeException("Record not found.");
         }
+    }
+
+    public List<SunriseSunsetResponse> getSunriseSunsetByCity(String cityName) {
+        City city = cityRepository.findByName(cityName).orElseThrow();
+        return sunriseSunsetRepository.findByCity(city);
     }
 }
