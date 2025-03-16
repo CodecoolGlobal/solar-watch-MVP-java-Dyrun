@@ -1,6 +1,7 @@
 package com.codecool.solarwatch.controller;
 
 import com.codecool.solarwatch.model.dto.SolarWatchReportResults;
+import com.codecool.solarwatch.model.dto.SunriseSunsetResponse;
 import com.codecool.solarwatch.model.entity.SunriseSunset;
 import com.codecool.solarwatch.service.SolarWatchService;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +45,11 @@ public class SolarWatchController {
         Optional<SunriseSunset> sunriseSunset = solarWatchService.getSunriseSunsetById(id);
         return sunriseSunset.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<List<SunriseSunsetResponse>> getSunriseSunsetByCity(@RequestParam String city) {
+        return ResponseEntity.ok(solarWatchService.getSunriseSunsetByCity(city));
     }
 
     @PutMapping("/{id}")
