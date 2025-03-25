@@ -32,7 +32,7 @@ public class SolarWatchService {
         this.sunriseSunsetRepository = sunriseSunsetRepository;
     }
 
-    public SolarWatchReportResults getSunriseAndSunsetForByGivenParameters(String cityName, LocalDate date) {
+    public SolarWatchReportResults getSunriseAndSunsetByGivenParameters(String cityName, LocalDate date) {
         City city = getOrCreateCity(cityName);
         SunriseSunset sunriseSunset = getOrCreateSunriseSunset(city, date);
         return new SolarWatchReportResults(sunriseSunset.getSunrise(), sunriseSunset.getSunset());
@@ -121,6 +121,12 @@ public class SolarWatchService {
 
     public List<SunriseSunsetResponse> getSunriseSunsetByCity(String cityName) {
         City city = cityRepository.findByName(cityName).orElseThrow();
-        return sunriseSunsetRepository.findByCity(city);
+        List<SunriseSunset> sunriseSunsets = sunriseSunsetRepository.findByCity(city);
+
+        return sunriseSunsets.stream().map(sunriseSunset -> new SunriseSunsetResponse(
+                sunriseSunset.getSunrise(),
+                sunriseSunset.getSunset(),
+                sunriseSunset.getDate()
+        )).toList();
     }
 }
