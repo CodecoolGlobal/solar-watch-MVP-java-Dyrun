@@ -7,6 +7,7 @@ import com.codecool.solarwatch.repository.MemberRepository;
 import com.codecool.solarwatch.repository.RoleRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -34,7 +35,9 @@ public class UserService {
         logger.info("Adding admin to user: " + username);
         Member user = memberRepository.findByName(username).orElseThrow();
         Role roleAdmin = roleRepository.findByRoleType(RoleType.ROLE_ADMIN).orElseThrow();
-        user.getRoles().add(roleAdmin);
+        Set<Role> updatedRoles = new HashSet<>(user.getRoles());
+        updatedRoles.add(roleAdmin);
+        user.setRoles(updatedRoles);
         return memberRepository.save(user);
     }
 }
