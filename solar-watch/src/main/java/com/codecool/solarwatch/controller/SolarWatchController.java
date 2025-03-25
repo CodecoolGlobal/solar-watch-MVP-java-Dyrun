@@ -25,7 +25,7 @@ public class SolarWatchController {
     @GetMapping
     public ResponseEntity<?> getSunriseSunset(@RequestParam(defaultValue = "Budapest") String city,
                                               @RequestParam String date) {
-        SolarWatchReportResults result = solarWatchService.getSunriseAndSunsetForByGivenParameters(city, LocalDate.parse(date));
+        SolarWatchReportResults result = solarWatchService.getSunriseAndSunsetByGivenParameters(city, LocalDate.parse(date));
         return ResponseEntity.ok(result);
     }
 
