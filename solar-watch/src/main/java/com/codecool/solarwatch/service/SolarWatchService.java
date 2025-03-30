@@ -10,6 +10,7 @@ import com.codecool.solarwatch.repository.CityRepository;
 import com.codecool.solarwatch.repository.SunriseSunsetRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -25,6 +26,12 @@ public class SolarWatchService {
     private static final Logger logger = LoggerFactory.getLogger(SolarWatchService.class);
     private final CityRepository cityRepository;
     private final SunriseSunsetRepository sunriseSunsetRepository;
+
+    @Value("${api.openweathermap.url}")
+    private String openWeatherMapUrl;
+
+    @Value("${api.sunrise-sunset.url}")
+    private String sunriseSunsetUrl;
 
     public SolarWatchService(RestTemplate restTemplate, CityRepository cityRepository, SunriseSunsetRepository sunriseSunsetRepository) {
         this.restTemplate = restTemplate;
@@ -45,8 +52,9 @@ public class SolarWatchService {
             return cityOptional.get();
         } else {
             logger.info("City {} not found in database, calling external Geocoding API", cityName);
-            String url = String.format("http://api.openweathermap.org/geo/1.0/direct?q=%s&appid=%s", cityName, API_KEY);
+            String url = String.format("%s/geo/1.0/direct?q=%s&appid=%s", openWeatherMapUrl, cityName, API_KEY);
             GeocodingReport[] response = restTemplate.getForObject(url, GeocodingReport[].class);
+            logger.info("response = {}", response[0].toString());
             if (response == null || response.length == 0) {
                 throw new RuntimeException("City not found by external API");
             }
@@ -70,9 +78,10 @@ public class SolarWatchService {
             return recordOptional.get();
         } else {
             logger.info("Sunrise/Sunset for city {} on {} not found in database, calling external API", city.getName(), date);
-            String url = String.format("https://api.sunrise-sunset.org/json?lat=%s&lng=%s&date=%s",
-                    city.getLatitude(), city.getLongitude(), date);
+            String url = String.format("%s/json?lat=%s&lng=%s&date=%s",
+                    sunriseSunsetUrl ,city.getLatitude(), city.getLongitude(), date);
             SolarWatchReport report = restTemplate.getForObject(url, SolarWatchReport.class);
+            logger.info("response = {}", report.toString());
             if (report == null || report.results() == null) {
                 throw new RuntimeException("Unable to fetch sunrise/sunset data from external API");
             }
