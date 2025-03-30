@@ -14,6 +14,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
@@ -36,6 +39,14 @@ class SolarWatchServiceTest {
 
     @InjectMocks
     private SolarWatchService solarWatchService;
+
+    @Value("${api.sunrise-sunset.url}")
+    static String sunriseSunsetUrl;
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("api.sunrise-sunset.url", () -> sunriseSunsetUrl);
+    }
 
     private final LocalDate testDate = LocalDate.of(2024, 3, 25);
 
@@ -89,7 +100,11 @@ class SolarWatchServiceTest {
         when(cityRepository.findByName("London")).thenReturn(Optional.empty());
         when(restTemplate.getForObject(contains("geo/1.0/direct"), eq(GeocodingReport[].class)))
                 .thenReturn(new GeocodingReport[]{geoResponse});
-        when(restTemplate.getForObject(contains("sunrise-sunset.org"), eq(SolarWatchReport.class)))
+        String expectedSunriseSunsetUrl = String.format(
+                "%s/json?lat=51.5074&lng=-0.1278&date=%s", sunriseSunsetUrl, testDate
+        );
+
+        when(restTemplate.getForObject(eq(expectedSunriseSunsetUrl), eq(SolarWatchReport.class)))
                 .thenReturn(solarResponse);
         ArgumentCaptor<City> cityCaptor = ArgumentCaptor.forClass(City.class);
         ArgumentCaptor<SunriseSunset> ssCaptor = ArgumentCaptor.forClass(SunriseSunset.class);
