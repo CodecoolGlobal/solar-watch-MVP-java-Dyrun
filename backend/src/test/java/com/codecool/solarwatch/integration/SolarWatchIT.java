@@ -9,7 +9,6 @@ import com.codecool.solarwatch.model.entity.SunriseSunset;
 import com.codecool.solarwatch.repository.CityRepository;
 import com.codecool.solarwatch.repository.MemberRepository;
 import com.codecool.solarwatch.repository.SunriseSunsetRepository;
-import com.codecool.solarwatch.security.jwt.JwtUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
