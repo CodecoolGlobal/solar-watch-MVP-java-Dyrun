@@ -29,6 +29,6 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
-      working-directory: solar-watch
-      run: mvn -B package
+      working-directory: ./backend
+      run: mvn -B clean install
 
