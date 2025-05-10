@@ -1,6 +1,6 @@
 import {Route, Routes} from "react-router-dom";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Registration from "./pages/Registration.jsx";
 import SolarWatch from "./pages/SolarWatch";
 import "./App.css";
 import Layout from "./components/Layout.jsx";
@@ -12,7 +12,7 @@ function App() {
         <Routes>
             <Route path="/" element={<Layout/>}>
                 <Route path="/login" element={<Login/>}/>
-                <Route path="/registration" element={<Register/>}/>
+                <Route path="/registration" element={<Registration/>}/>
                 <Route path="/solar-watch" element={<ProtectedRoute><SolarWatch/></ProtectedRoute>}/>
             </Route>
         </Routes>
