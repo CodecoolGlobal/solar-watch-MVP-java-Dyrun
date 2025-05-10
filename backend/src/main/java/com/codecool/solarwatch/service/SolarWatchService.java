@@ -1,8 +1,8 @@
 package com.codecool.solarwatch.service;
 
 import com.codecool.solarwatch.model.dto.GeocodingReport;
-import com.codecool.solarwatch.model.dto.SolarWatchReport;
-import com.codecool.solarwatch.model.dto.SolarWatchReportResults;
+import com.codecool.solarwatch.model.dto.SolarWatchResponse;
+import com.codecool.solarwatch.model.dto.SunriseSunsetReport;
 import com.codecool.solarwatch.model.dto.SunriseSunsetResponse;
 import com.codecool.solarwatch.model.entity.City;
 import com.codecool.solarwatch.model.entity.SunriseSunset;
@@ -16,16 +16,19 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
 public class SolarWatchService {
 
-    private static final String API_KEY = System.getenv("API_KEY");
     private final RestTemplate restTemplate;
     private static final Logger logger = LoggerFactory.getLogger(SolarWatchService.class);
     private final CityRepository cityRepository;
     private final SunriseSunsetRepository sunriseSunsetRepository;
+
+    @Value("${api.key}")
+    private String API_KEY;
 
     @Value("${api.openweathermap.url}")
     private String openWeatherMapUrl;
@@ -39,10 +42,10 @@ public class SolarWatchService {
         this.sunriseSunsetRepository = sunriseSunsetRepository;
     }
 
-    public SolarWatchReportResults getSunriseAndSunsetByGivenParameters(String cityName, LocalDate date) {
+    public SolarWatchResponse getSunriseAndSunsetByGivenParameters(String cityName, LocalDate date) {
         City city = getOrCreateCity(cityName);
         SunriseSunset sunriseSunset = getOrCreateSunriseSunset(city, date);
-        return new SolarWatchReportResults(sunriseSunset.getSunrise(), sunriseSunset.getSunset());
+        return new SolarWatchResponse(sunriseSunset.getSunrise(), sunriseSunset.getSunset(), date, city.getName(), city.getCountry());
     }
 
     private City getOrCreateCity(String cityName) {
@@ -51,24 +54,34 @@ public class SolarWatchService {
             logger.info("City {} found in database", cityName);
             return cityOptional.get();
         } else {
-            logger.info("City {} not found in database, calling external Geocoding API", cityName);
-            String url = String.format("%s/geo/1.0/direct?q=%s&appid=%s", openWeatherMapUrl, cityName, API_KEY);
-            GeocodingReport[] response = restTemplate.getForObject(url, GeocodingReport[].class);
-            logger.info("response = {}", response[0].toString());
-            if (response == null || response.length == 0) {
-                throw new RuntimeException("City not found by external API");
-            }
-            GeocodingReport report = response[0];
-            City newCity = new City();
-            newCity.setName(cityName);
-            newCity.setLatitude(report.lat());
-            newCity.setLongitude(report.lon());
-            newCity.setState(report.state());
-            newCity.setCountry(report.country());
-            City savedCity = cityRepository.save(newCity);
-            logger.info("Saved new city: {}", savedCity);
-            return savedCity;
+            GeocodingReport report = fetchGeocodingData(cityName);
+            return saveCity(report);
         }
+    }
+
+    private GeocodingReport fetchGeocodingData(String cityName) {
+        logger.info("City {} not found in database, calling external Geocoding API", cityName);
+        String url = String.format("%s/geo/1.0/direct?q=%s&appid=%s", openWeatherMapUrl, cityName, API_KEY);
+        GeocodingReport[] response = restTemplate.getForObject(url, GeocodingReport[].class);
+        if (response == null || response.length == 0) {
+            throw new NoSuchElementException("City not found by external API");
+        }
+        logger.info("response = {}\nurl: {}", response[0].toString(), url);
+        return response[0];
+    }
+
+    private City saveCity(GeocodingReport report) {
+        Optional<City> city = cityRepository.findByName(report.name());
+        if (city.isPresent()) return city.orElseThrow(() -> new NoSuchElementException("City " + report.name() + " not found in database"));
+        City newCity = new City();
+        newCity.setName(report.name());
+        newCity.setLatitude(report.lat());
+        newCity.setLongitude(report.lon());
+        newCity.setState(report.state());
+        newCity.setCountry(report.country());
+        City savedCity = cityRepository.save(newCity);
+        logger.info("Saved new city: {}", savedCity);
+        return savedCity;
     }
 
     private SunriseSunset getOrCreateSunriseSunset(City city, LocalDate date) {
@@ -77,23 +90,32 @@ public class SolarWatchService {
             logger.info("Sunrise/Sunset for city {} on {} found in database", city.getName(), date);
             return recordOptional.get();
         } else {
-            logger.info("Sunrise/Sunset for city {} on {} not found in database, calling external API", city.getName(), date);
-            String url = String.format("%s/json?lat=%s&lng=%s&date=%s",
-                    sunriseSunsetUrl ,city.getLatitude(), city.getLongitude(), date);
-            SolarWatchReport report = restTemplate.getForObject(url, SolarWatchReport.class);
-            logger.info("response = {}", report.toString());
-            if (report == null || report.results() == null) {
-                throw new RuntimeException("Unable to fetch sunrise/sunset data from external API");
-            }
-            SunriseSunset newRecord = new SunriseSunset();
-            newRecord.setCity(city);
-            newRecord.setDate(date);
-            newRecord.setSunrise(report.results().sunrise());
-            newRecord.setSunset(report.results().sunset());
-            SunriseSunset savedRecord = sunriseSunsetRepository.save(newRecord);
-            logger.info("Saved new sunrise/sunset record: {}", savedRecord);
-            return savedRecord;
+            SunriseSunsetReport report = fetchSunriseSunset(city, date);
+            return saveSunriseSunset(city, date, report);
         }
+    }
+
+    private SunriseSunsetReport fetchSunriseSunset(City city, LocalDate date) {
+        logger.info("Sunrise/Sunset for city {} on {} not found in database, calling external API", city.getName(), date);
+        String url = String.format("%s/json?lat=%s&lng=%s&date=%s&formatted=0",
+                sunriseSunsetUrl, city.getLatitude(), city.getLongitude(), date);
+        SunriseSunsetReport report = restTemplate.getForObject(url, SunriseSunsetReport.class);
+        if (report == null || report.results() == null) {
+            throw new NoSuchElementException("Unable to fetch sunrise/sunset data from external API");
+        }
+        logger.info("response = {}\nurl:{}", report.toString(), url);
+        return report;
+    }
+
+    private SunriseSunset saveSunriseSunset(City city, LocalDate date, SunriseSunsetReport report) {
+        SunriseSunset newRecord = new SunriseSunset();
+        newRecord.setCity(city);
+        newRecord.setDate(date);
+        newRecord.setSunrise(report.results().sunrise());
+        newRecord.setSunset(report.results().sunset());
+        SunriseSunset savedRecord = sunriseSunsetRepository.save(newRecord);
+        logger.info("Saved new sunrise/sunset record: {}", savedRecord);
+        return savedRecord;
     }
 
     public SunriseSunset saveSunriseSunset(SunriseSunset sunriseSunset) {
@@ -104,8 +126,8 @@ public class SolarWatchService {
         return sunriseSunsetRepository.findAll();
     }
 
-    public Optional<SunriseSunset> getSunriseSunsetById(Long id) {
-        return sunriseSunsetRepository.findById(id);
+    public SunriseSunset getSunriseSunsetById(Long id) {
+        return sunriseSunsetRepository.findById(id).orElseThrow(() -> new NoSuchElementException("No data found with id: " + id.toString()));
     }
 
     public SunriseSunset updateSunriseSunset(Long id, String newSunrise, String newSunset) {
@@ -116,7 +138,7 @@ public class SolarWatchService {
             sunriseSunset.setSunset(newSunset);
             return sunriseSunsetRepository.save(sunriseSunset);
         } else {
-            throw new RuntimeException("Sunrise/Sunset record not found.");
+            throw new NoSuchElementException("Sunrise/Sunset record not found with id: " + id);
         }
     }
 
@@ -124,12 +146,12 @@ public class SolarWatchService {
         if (sunriseSunsetRepository.existsById(id)) {
             sunriseSunsetRepository.deleteById(id);
         } else {
-            throw new RuntimeException("Record not found.");
+            throw new NoSuchElementException("Record not found with id: " + id);
         }
     }
 
     public List<SunriseSunsetResponse> getSunriseSunsetByCity(String cityName) {
-        City city = cityRepository.findByName(cityName).orElseThrow();
+        City city = cityRepository.findByName(cityName).orElseThrow(() -> new NoSuchElementException("City not found: " + cityName));
         List<SunriseSunset> sunriseSunsets = sunriseSunsetRepository.findByCity(city);
 
         return sunriseSunsets.stream().map(sunriseSunset -> new SunriseSunsetResponse(
