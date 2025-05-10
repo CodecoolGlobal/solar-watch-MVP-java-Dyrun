@@ -4,12 +4,12 @@ import com.codecool.solarwatch.model.entity.City;
 import com.codecool.solarwatch.repository.CityRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,10 +38,12 @@ class CityServiceTest {
     @Test
     void saveCityWhenValidCityItReturnsSavedCity() {
         City mockCity = createTestCity("New York", 40.7128, -74.0060, "NY", "USA");
+
         when(cityRepository.save(any(City.class))).thenReturn(mockCity);
         City result = cityService.saveCity(mockCity);
+
         assertNotNull(result);
-        assertEquals("New York", result.getName());
+        assertEquals(mockCity, result);
         verify(cityRepository, times(1)).save(mockCity);
     }
 
@@ -51,8 +53,10 @@ class CityServiceTest {
                 createTestCity("London", 51.5074, -0.1278, "England", "UK"),
                 createTestCity("Paris", 48.8566, 2.3522, "Île-de-France", "France")
         );
+
         when(cityRepository.findAll()).thenReturn(mockCities);
         List<City> result = cityService.getAllCities();
+
         assertEquals(2, result.size());
         verify(cityRepository, times(1)).findAll();
     }
@@ -60,42 +64,42 @@ class CityServiceTest {
     @Test
     void getCityByIdWhenExistingIdItReturnsCity() {
         City mockCity = createTestCity("Berlin", 52.5200, 13.4050, "Berlin", "Germany");
+
         when(cityRepository.findById(1L)).thenReturn(Optional.of(mockCity));
-        Optional<City> result = cityService.getCityById(1L);
-        assertTrue(result.isPresent());
-        assertEquals("Berlin", result.get().getName());
+        City result = cityService.getCityById(1L);
+
+        assertEquals(mockCity, result);
     }
 
     @Test
     void updateCityWhenExistingIdItUpdatesAndReturnsCity() {
         City existingCity = createTestCity("Old City", 0.0, 0.0, "Old State", "Old Country");
         City updatedCity = createTestCity("Updated City", 1.0, 1.0, "New State", "New Country");
+
         when(cityRepository.findById(1L)).thenReturn(Optional.of(existingCity));
-        when(cityRepository.save(any(City.class))).thenReturn(existingCity);
+        when(cityRepository.save(existingCity)).thenReturn(existingCity);
         City result = cityService.updateCity(1L, updatedCity);
-        ArgumentCaptor<City> captor = ArgumentCaptor.forClass(City.class);
-        verify(cityRepository).save(captor.capture());
-        City savedCity = captor.getValue();
-        assertEquals("Updated City", savedCity.getName());
-        assertEquals(1.0, savedCity.getLatitude());
-        assertEquals("New Country", savedCity.getCountry());
+
+        assertEquals(updatedCity, result);
+        verify(cityRepository).save(existingCity);
         assertSame(existingCity, result);
     }
 
     @Test
     void getCityByNameWhenExistingNameItReturnsCity() {
         City mockCity = createTestCity("Tokyo", 35.6762, 139.6503, "Kanto", "Japan");
+
         when(cityRepository.findByName("Tokyo")).thenReturn(Optional.of(mockCity));
-        Optional<City> result = cityService.getCityByName("Tokyo");
-        assertTrue(result.isPresent());
-        assertEquals("Japan", result.get().getCountry());
+        City result = cityService.getCityByName("Tokyo");
+
+        assertEquals(mockCity, result);
     }
 
     @Test
-    void getCityByIdWhenNonExistingIdItReturnsEmpty() {
+    void getCityByIdWhenNonExistingIdItThrowsException() {
         when(cityRepository.findById(99L)).thenReturn(Optional.empty());
-        Optional<City> result = cityService.getCityById(99L);
-        assertTrue(result.isEmpty());
+
+        assertThrows(NoSuchElementException.class, () -> cityService.getCityById(99L));
         verify(cityRepository, times(1)).findById(99L);
     }
 
@@ -103,7 +107,8 @@ class CityServiceTest {
     void updateCityWhenNonExistingIdItThrowsException() {
         when(cityRepository.findById(99L)).thenReturn(Optional.empty());
         City updatedCity = createTestCity("Updated City", 1.0, 1.0, "New State", "New Country");
-        assertThrows(RuntimeException.class, () -> {
+
+        assertThrows(NoSuchElementException.class, () -> {
             cityService.updateCity(99L, updatedCity);
         });
         verify(cityRepository, never()).save(any());
@@ -113,6 +118,7 @@ class CityServiceTest {
     void deleteCityWhenExistingIdItDeletesCity() {
         when(cityRepository.existsById(1L)).thenReturn(true);
         cityService.deleteCity(1L);
+
         verify(cityRepository, times(1)).deleteById(1L);
         verify(cityRepository, times(1)).existsById(1L);
     }
@@ -120,7 +126,8 @@ class CityServiceTest {
     @Test
     void deleteCityWhenNonExistingIdItThrowsException() {
         when(cityRepository.existsById(99L)).thenReturn(false);
-        assertThrows(RuntimeException.class, () -> {
+
+        assertThrows(NoSuchElementException.class, () -> {
             cityService.deleteCity(99L);
         });
         verify(cityRepository, never()).deleteById(anyLong());
