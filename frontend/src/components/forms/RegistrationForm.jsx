@@ -1,6 +1,6 @@
 import {useState} from "react";
 
-function RegisterForm({onSubmit}) {
+function RegistrationForm({onSubmit}) {
     const [user, setUser] = useState({username: "", password: ""});
 
     function handleChange(e) {
@@ -43,4 +43,4 @@ function RegisterForm({onSubmit}) {
     )
 }
 
-export default RegisterForm;
+export default RegistrationForm;
