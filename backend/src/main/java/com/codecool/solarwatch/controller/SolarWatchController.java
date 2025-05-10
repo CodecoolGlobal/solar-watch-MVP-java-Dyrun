@@ -1,16 +1,15 @@
 package com.codecool.solarwatch.controller;
 
-import com.codecool.solarwatch.model.dto.SolarWatchReportResults;
+import com.codecool.solarwatch.model.dto.SolarWatchResponse;
 import com.codecool.solarwatch.model.dto.SunriseSunsetResponse;
 import com.codecool.solarwatch.model.entity.SunriseSunset;
 import com.codecool.solarwatch.service.SolarWatchService;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/sunrise-sunset")
@@ -23,47 +22,45 @@ public class SolarWatchController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getSunriseSunset(@RequestParam(defaultValue = "Budapest") String city,
-                                              @RequestParam String date) {
-        SolarWatchReportResults result = solarWatchService.getSunriseAndSunsetByGivenParameters(city, LocalDate.parse(date));
-        return ResponseEntity.ok(result);
+    public SolarWatchResponse getSunriseSunset(@RequestParam(defaultValue = "Budapest") String city,
+                                               @RequestParam String date) {
+        return solarWatchService.getSunriseAndSunsetByGivenParameters(city, LocalDate.parse(date));
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SunriseSunset> createSunriseSunset(@RequestBody SunriseSunset sunriseSunset) {
-        return ResponseEntity.ok(solarWatchService.saveSunriseSunset(sunriseSunset));
+    public SunriseSunset createSunriseSunset(@RequestBody SunriseSunset sunriseSunset) {
+        return solarWatchService.saveSunriseSunset(sunriseSunset);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<SunriseSunset>> getAllSunriseSunsets() {
-        return ResponseEntity.ok(solarWatchService.getAllSunriseSunset());
+    public List<SunriseSunset> getAllSunriseSunsets() {
+        return solarWatchService.getAllSunriseSunset();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SunriseSunset> getSunriseSunsetById(@PathVariable Long id) {
-        Optional<SunriseSunset> sunriseSunset = solarWatchService.getSunriseSunsetById(id);
-        return sunriseSunset.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public SunriseSunset getSunriseSunsetById(@PathVariable Long id) {
+        return solarWatchService.getSunriseSunsetById(id);
     }
 
-    @GetMapping("/")
-    public ResponseEntity<List<SunriseSunsetResponse>> getSunriseSunsetByCity(@RequestParam String city) {
-        return ResponseEntity.ok(solarWatchService.getSunriseSunsetByCity(city));
+    @GetMapping("/city")
+    public List<SunriseSunsetResponse> getSunriseSunsetByCity(@RequestParam String cityName) {
+        return solarWatchService.getSunriseSunsetByCity(cityName);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SunriseSunset> updateSunriseSunset(@PathVariable Long id,
-                                                             @RequestParam String sunrise,
-                                                             @RequestParam String sunset) {
-        return ResponseEntity.ok(solarWatchService.updateSunriseSunset(id, sunrise, sunset));
+    public SunriseSunset updateSunriseSunset(@PathVariable Long id,
+                                             @RequestParam String sunrise,
+                                             @RequestParam String sunset) {
+        return solarWatchService.updateSunriseSunset(id, sunrise, sunset);
     }
 
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteSunriseSunset(@PathVariable Long id) {
+    public void deleteSunriseSunset(@PathVariable Long id) {
         solarWatchService.deleteSunriseSunset(id);
-        return ResponseEntity.noContent().build();
     }
 }
