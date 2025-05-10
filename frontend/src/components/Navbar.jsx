@@ -1,18 +1,20 @@
-import { Link, useNavigate } from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
+import {useAuth} from "./AuthProvider.jsx"
 
-function Navbar({ isAuthenticated, onLogout }) {
+function Navbar() {
     const navigate = useNavigate();
+    const {user, logout} = useAuth();
 
-    const handleLogout = () => {
-        onLogout();
+    function handleLogout() {
+        logout();
         navigate("/login");
-    };
+    }
 
     return (
         <nav className="sticky top-0 z-50 bg-blue-600 p-4 text-white flex justify-between items-center shadow-lg">
             <h1 className="text-xl font-bold">SolarWatch</h1>
             <div className="space-x-4">
-                {!isAuthenticated ? (
+                {!user ? (
                     <>
                         <Link to="/login" className="btn">Login</Link>
                         <Link to="/registration" className="btn">Register</Link>
