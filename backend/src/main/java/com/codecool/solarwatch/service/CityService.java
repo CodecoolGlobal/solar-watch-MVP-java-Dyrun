@@ -5,6 +5,7 @@ import com.codecool.solarwatch.repository.CityRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -23,12 +24,12 @@ public class CityService {
         return cityRepository.findAll();
     }
 
-    public Optional<City> getCityById(Long id) {
-        return cityRepository.findById(id);
+    public City getCityById(Long id) {
+        return cityRepository.findById(id).orElseThrow(() -> new NoSuchElementException("No city found with id: " + id));
     }
 
-    public Optional<City> getCityByName(String name) {
-        return cityRepository.findByName(name);
+    public City getCityByName(String name) {
+        return cityRepository.findByName(name).orElseThrow(() -> new NoSuchElementException("No city found with id: " + name));
     }
 
     public City updateCity(Long id, City updatedCity) {
@@ -42,7 +43,7 @@ public class CityService {
             city.setCountry(updatedCity.getCountry());
             return cityRepository.save(city);
         } else {
-            throw new RuntimeException("City not found.");
+            throw new NoSuchElementException("No city found with id: " + id);
         }
     }
 
@@ -50,7 +51,7 @@ public class CityService {
         if (cityRepository.existsById(id)) {
             cityRepository.deleteById(id);
         } else {
-            throw new RuntimeException("City not found.");
+            throw new NoSuchElementException("No city found with id: " + id);
         }
     }
 }
