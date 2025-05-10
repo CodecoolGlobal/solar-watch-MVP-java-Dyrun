@@ -1,6 +1,6 @@
 package com.codecool.solarwatch.controller;
 
-import org.postgresql.util.PSQLException;
+import com.codecool.solarwatch.model.dto.ErrorMsg;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,28 +16,22 @@ public class SolarWatchControllerAdvice {
     @ResponseBody
     @ExceptionHandler(DateTimeParseException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String dateTimeParseExceptionHandler(DateTimeParseException ex) {
-        return ex.getMessage();
+    public ErrorMsg dateTimeParseExceptionHandler(DateTimeParseException ex) {
+        return new ErrorMsg(ex.getMessage());
     }
 
     @ResponseBody
     @ExceptionHandler(NullPointerException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String nullPointerExceptionHandler(NullPointerException ex) {
-        return ex.getMessage();
+    public ErrorMsg nullPointerExceptionHandler(NullPointerException ex) {
+        return new ErrorMsg(ex.getMessage());
     }
 
     @ResponseBody
     @ExceptionHandler(NoSuchElementException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String noSuchElementException(NoSuchElementException ex) {
-        return ex.getMessage();
+    public ErrorMsg noSuchElementException(NoSuchElementException ex) {
+        return new ErrorMsg(ex.getMessage());
     }
 
-    @ResponseBody
-    @ExceptionHandler(PSQLException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String psqlException(PSQLException ex) {
-        return ex.getMessage();
-    }
 }
