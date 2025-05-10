@@ -1,63 +1,59 @@
-import { useState } from "react";
+import {useState} from "react";
+import Error from "../components/Error.jsx";
+import SolarWatchForm from "../components/forms/SolarWatchForm.jsx";
+import SolarWatchContent from "../components/SolarWatchContent.jsx";
+import {useAuth} from "../components/AuthProvider.jsx";
 
 function SolarWatch() {
-    const [city, setCity] = useState("");
     const [data, setData] = useState(null);
     const [error, setError] = useState(false);
+    const [errorMsg, setErrorMsg] = useState("");
+    const {user, logout} = useAuth();
 
-    const handleFetch = async () => {
-        const token = localStorage.getItem("jwt");
-        const response = await fetch(`/api/sunrise-sunset/?city=${city}`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        if (response.ok) {
-            const result = await response.json();
-            setData(result);
-            setError(false);
-        } else {
-            setData(null);
-            setError(true);
+    function handleError(display, errorMsg) {
+        setError(display);
+        setErrorMsg(errorMsg);
+    }
+
+    async function handleSubmit(e, city, date) {
+        e.preventDefault();
+        const token = user.jwt;
+        try {
+            const response = await fetch(`/api/sunrise-sunset?city=${city}&date=${date}`, {
+                headers: {Authorization: `Bearer ${token}`},
+            });
+            if (response.ok) {
+                const result = await response.json();
+                setData({
+                    ...result,
+                    sunrise: result.sunrise.replace('T', ' ').substring(0, 19),
+                    sunset: result.sunset.replace('T', ' ').substring(0, 19)
+                });
+                handleError(false);
+            } else if (response.status === 400) {
+                const result = await response.json();
+                setData(null);
+                handleError(true, result.errorMsg);
+            } else if (response.status === 401) {
+                handleError(true, "Unauthorized request, redirecting to login...");
+                setTimeout(() => {
+                    logout();
+                }, 2000);
+            } else {
+                handleError(true, "Something went wrong...");
+            }
+        } catch (err) {
+            handleError(true, err.message);
         }
-    };
+    }
 
     return (
         <div className="p-4 max-w-md mx-auto">
-            <div className="flex gap-2 mb-4">
-                <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Enter city"
-                    className="input input-bordered w-full"
-                />
-                <button
-                    onClick={handleFetch}
-                    className="btn btn-primary"
-                >
-                    Get Sunrise/Sunset
-                </button>
-            </div>
+            <SolarWatchForm onSubmit={handleSubmit} onError={handleError}/>
             {data && (
-                <div className="space-y-4">
-                    {data.map((sunriseSunset, index) => (
-                        <div key={index} className="card bg-base-200 shadow-md">
-                            <div className="card-body">
-                                <p><strong>Sunrise:</strong> {sunriseSunset.sunrise}</p>
-                                <p><strong>Sunset:</strong> {sunriseSunset.sunset}</p>
-                                <p><strong>Date:</strong> {sunriseSunset.date}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                <SolarWatchContent data={data}/>
             )}
-            {error && (
-                <div className="alert alert-error mt-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>There aren't any data for {city}</span>
-                </div>
-            )}
+            <Error errorMsg={errorMsg} display={error}/>
         </div>
     );
 }
