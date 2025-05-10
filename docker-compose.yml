@@ -1,0 +1,45 @@
+services:
+  solar_watch_db:
+    image: postgres:latest
+    container_name: solar_watch_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: solar_watch
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  solar_watch_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: solar_watch_backend
+    restart: always
+    depends_on:
+      - solar_watch_db
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: ${DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      API_KEY: ${API_KEY}
+
+  solar_watch_frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: solar_watch_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - solar_watch_backend
+
+volumes:
+  postgres_data:
+    driver: local
