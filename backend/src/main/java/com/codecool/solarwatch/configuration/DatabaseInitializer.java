@@ -5,8 +5,6 @@ import com.codecool.solarwatch.model.entity.Role;
 import com.codecool.solarwatch.model.entity.RoleType;
 import com.codecool.solarwatch.repository.MemberRepository;
 import com.codecool.solarwatch.repository.RoleRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
