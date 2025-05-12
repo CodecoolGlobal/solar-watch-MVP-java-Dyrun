@@ -1,9 +1,6 @@
 package com.codecool.solarwatch.service;
 
-import com.codecool.solarwatch.model.dto.GeocodingReport;
-import com.codecool.solarwatch.model.dto.SolarWatchResponse;
-import com.codecool.solarwatch.model.dto.SunriseSunsetReport;
-import com.codecool.solarwatch.model.dto.SunriseSunsetResponse;
+import com.codecool.solarwatch.model.dto.*;
 import com.codecool.solarwatch.model.entity.City;
 import com.codecool.solarwatch.model.entity.SunriseSunset;
 import com.codecool.solarwatch.repository.CityRepository;
@@ -12,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
@@ -118,8 +116,14 @@ public class SolarWatchService {
         return savedRecord;
     }
 
-    public SunriseSunset saveSunriseSunset(SunriseSunset sunriseSunset) {
-        return sunriseSunsetRepository.save(sunriseSunset);
+    public SunriseSunset saveSunriseSunset(SunriseSunsetRequest sunriseSunset) {
+        City city = cityRepository.findByName(sunriseSunset.cityName()).orElseThrow(() -> new NoSuchElementException("City " + sunriseSunset.cityName() + " not found"));
+        SunriseSunset newRecord = new SunriseSunset();
+        newRecord.setCity(city);
+        newRecord.setDate(sunriseSunset.date());
+        newRecord.setSunrise(sunriseSunset.sunrise());
+        newRecord.setSunset(sunriseSunset.sunset());
+        return sunriseSunsetRepository.save(newRecord);
     }
 
     public List<SunriseSunset> getAllSunriseSunset() {
@@ -130,6 +134,7 @@ public class SolarWatchService {
         return sunriseSunsetRepository.findById(id).orElseThrow(() -> new NoSuchElementException("No data found with id: " + id.toString()));
     }
 
+    @Transactional
     public SunriseSunset updateSunriseSunset(Long id, String newSunrise, String newSunset) {
         Optional<SunriseSunset> SunriseSunset = sunriseSunsetRepository.findById(id);
         if (SunriseSunset.isPresent()) {
