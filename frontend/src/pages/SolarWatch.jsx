@@ -31,9 +31,9 @@ function SolarWatch() {
                 });
                 handleError(false);
             } else if (response.status === 400) {
-                const result = await response.json();
+                const result = await response.text();
                 setData(null);
-                handleError(true, result.errorMsg);
+                handleError(true, result);
             } else if (response.status === 401) {
                 handleError(true, "Unauthorized request, redirecting to login...");
                 setTimeout(() => {
