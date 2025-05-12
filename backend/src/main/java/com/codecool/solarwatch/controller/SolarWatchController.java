@@ -1,6 +1,7 @@
 package com.codecool.solarwatch.controller;
 
 import com.codecool.solarwatch.model.dto.SolarWatchResponse;
+import com.codecool.solarwatch.model.dto.SunriseSunsetRequest;
 import com.codecool.solarwatch.model.dto.SunriseSunsetResponse;
 import com.codecool.solarwatch.model.entity.SunriseSunset;
 import com.codecool.solarwatch.service.SolarWatchService;
@@ -30,7 +31,7 @@ public class SolarWatchController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    public SunriseSunset createSunriseSunset(@RequestBody SunriseSunset sunriseSunset) {
+    public SunriseSunset createSunriseSunset(@RequestBody SunriseSunsetRequest sunriseSunset) {
         return solarWatchService.saveSunriseSunset(sunriseSunset);
     }
 
