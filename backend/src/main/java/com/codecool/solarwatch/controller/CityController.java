@@ -1,5 +1,6 @@
 package com.codecool.solarwatch.controller;
 
+import com.codecool.solarwatch.model.dto.CityRequest;
 import com.codecool.solarwatch.model.entity.City;
 import com.codecool.solarwatch.service.CityService;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ public class CityController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('ADMIN')")
-    public City createCity(@RequestBody City city) {
+    public City createCity(@RequestBody CityRequest city) {
         return cityService.saveCity(city);
     }
 
@@ -41,7 +42,7 @@ public class CityController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public City updateCity(@PathVariable Long id, @RequestBody City updatedCity) {
+    public City updateCity(@PathVariable Long id, @RequestBody CityRequest updatedCity) {
         return cityService.updateCity(id, updatedCity);
     }
 
