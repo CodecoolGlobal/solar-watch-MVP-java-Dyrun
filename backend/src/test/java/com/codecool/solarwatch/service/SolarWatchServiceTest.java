@@ -230,13 +230,15 @@ class SolarWatchServiceTest {
     @Test
     void saveSunriseSunsetWhenValidEntityItReturnsSavedEntity() {
         SunriseSunset newRecord = createTestSunriseSunset(createTestCity());
+        SunriseSunsetRequest newRequest = new SunriseSunsetRequest(newRecord.getCity().getName(), newRecord.getSunrise(), newRecord.getSunset(), newRecord.getDate());
 
-        when(sunriseSunsetRepository.save(newRecord)).thenReturn(newRecord);
-        SunriseSunset result = solarWatchService.saveSunriseSunset(newRecord);
+        when(cityRepository.findByName(newRequest.cityName())).thenReturn(Optional.of(newRecord.getCity()));
+        when(sunriseSunsetRepository.save(any(SunriseSunset.class))).thenReturn(newRecord);
+        SunriseSunset result = solarWatchService.saveSunriseSunset(newRequest);
 
         assertNotNull(result);
         assertEquals(newRecord.getSunrise(), result.getSunrise());
-        verify(sunriseSunsetRepository).save(newRecord);
+        verify(sunriseSunsetRepository).save(any(SunriseSunset.class));
     }
 
     @Test

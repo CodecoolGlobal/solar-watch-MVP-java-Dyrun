@@ -1,5 +1,6 @@
 package com.codecool.solarwatch.service;
 
+import com.codecool.solarwatch.model.dto.CityRequest;
 import com.codecool.solarwatch.model.entity.City;
 import com.codecool.solarwatch.repository.CityRepository;
 import org.junit.jupiter.api.Test;
@@ -38,9 +39,9 @@ class CityServiceTest {
     @Test
     void saveCityWhenValidCityItReturnsSavedCity() {
         City mockCity = createTestCity("New York", 40.7128, -74.0060, "NY", "USA");
-
+        CityRequest cityRequest = new CityRequest(mockCity.getName(), mockCity.getLatitude(), mockCity.getLongitude(), mockCity.getState(), mockCity.getCountry());
         when(cityRepository.save(any(City.class))).thenReturn(mockCity);
-        City result = cityService.saveCity(mockCity);
+        City result = cityService.saveCity(cityRequest);
 
         assertNotNull(result);
         assertEquals(mockCity, result);
@@ -74,13 +75,13 @@ class CityServiceTest {
     @Test
     void updateCityWhenExistingIdItUpdatesAndReturnsCity() {
         City existingCity = createTestCity("Old City", 0.0, 0.0, "Old State", "Old Country");
-        City updatedCity = createTestCity("Updated City", 1.0, 1.0, "New State", "New Country");
+        CityRequest updatedCity = new CityRequest("Updated City", 1.0, 1.0, "New State", "New Country");
 
         when(cityRepository.findById(1L)).thenReturn(Optional.of(existingCity));
         when(cityRepository.save(existingCity)).thenReturn(existingCity);
         City result = cityService.updateCity(1L, updatedCity);
 
-        assertEquals(updatedCity, result);
+        assertEquals(updatedCity.name(), result.getName());
         verify(cityRepository).save(existingCity);
         assertSame(existingCity, result);
     }
@@ -106,7 +107,7 @@ class CityServiceTest {
     @Test
     void updateCityWhenNonExistingIdItThrowsException() {
         when(cityRepository.findById(99L)).thenReturn(Optional.empty());
-        City updatedCity = createTestCity("Updated City", 1.0, 1.0, "New State", "New Country");
+        CityRequest updatedCity = new CityRequest("Updated City", 1.0, 1.0, "New State", "New Country");
 
         assertThrows(NoSuchElementException.class, () -> {
             cityService.updateCity(99L, updatedCity);
